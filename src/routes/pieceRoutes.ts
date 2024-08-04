@@ -7,5 +7,6 @@ const router = Router()
 router.post('/', authenticateToken, PieceController.addPiece)
 router.get('/', PieceController.getPieces)
 router.get('/:pieceId', PieceController.getPieceById)
+router.put('/:pieceId', authenticateToken ,PieceController.updatePiece)
 
 export default router

@@ -49,14 +49,16 @@ const pieceSchema : Schema = new Schema<IPiece>({
         type: Number,
         trim: true
     },
-    photos: [
-        {
-            type: String,
-            required: true,
-            trim: true
-        }
-    ]
+    photos: {
+        type: [String],
+        required: true,
+        validate: [arrayLimit]
+    }
 })
+
+function arrayLimit(val : string[]) {
+    return val.length >= 1 && val.length <= 5
+}
 
 const Piece = mongoose.model<IPiece>('Piece', pieceSchema)
 export default Piece

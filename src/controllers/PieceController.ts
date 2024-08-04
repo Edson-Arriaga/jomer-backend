@@ -1,9 +1,11 @@
 import { Request, Response } from "express"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import sharp from "sharp"
-import { PieceBodyType } from "../types"
+import { PieceBodyType, PieceUpdateBodyType } from "../types"
 import app from "../config/firebaseConfig";
 import Piece from "../models/Piece";
+
+const storage = getStorage(app, "gs://jomer-ba42e.appspot.com");
 
 export class PieceController {
     static addPiece = async (req: Request<{}, {}, PieceBodyType>, res: Response) => {
@@ -22,8 +24,6 @@ export class PieceController {
                 const error = new Error('Sube de 1 a 5 fotos.')
                 return res.status(400).json({error: error.message})
             }
-
-            const storage = getStorage(app, "gs://jomer-ba42e.appspot.com");
 
             for(const file of fileArray) {
                 const {width, height} = await sharp(file.data).metadata();
@@ -77,8 +77,70 @@ export class PieceController {
                 return res.status(404).json({error: error.message})
             }
             res.send(piece)
+
         } catch (error) {
-            res.send(error)
+            res.send(error.message)
+        }
+    }
+
+    static updatePiece = async (req: Request<{pieceId: string}, {}, PieceUpdateBodyType>, res: Response) => {
+        try {
+            const { pieceId } = req.params
+            const piece = await Piece.findById(pieceId)
+
+            if(!piece){
+                const error = new Error('Pieza no encontrada')
+                return res.status(404).json({error: error.message})
+            }
+
+            const { 
+                name, 
+                price, 
+                caratage, 
+                category, 
+                description, 
+                measure, 
+                measure2, 
+                weight, 
+                photoSelected 
+            } = req.body
+
+            if(req.files !== null){
+                const file = req.files['newPhotoFile']
+                const fileArray = Array.isArray(file) ? file : [file]
+                const newPhoto = fileArray[0]
+
+                const { width, height } = await sharp(newPhoto.data).metadata()
+                if(width !== height){
+                    const error = new Error('La imagen dede ser cuadrada.')
+                    return res.status(400).json({error: error.message})
+                }
+
+                const imageWebp = await sharp(newPhoto.data)
+                    .toFormat("webp", {quality: 80})
+                    .toBuffer()
+
+                const storageRef = ref(storage, photoSelected);
+
+                await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
+            }
+
+            piece.name = name
+            piece.price = price
+            piece.caratage = caratage
+            piece.category = category
+            piece.description = description
+            piece.measure = measure
+            if(measure2){
+                piece.measure2 = measure2
+            }
+            piece.weight = weight
+            
+            await piece.save()
+
+            res.send("Pieza Actuazliada Correctamente")          
+        } catch (error) {
+            res.status(500).send(error.message);
         }
     }
 }

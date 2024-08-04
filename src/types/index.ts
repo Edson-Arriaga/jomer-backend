@@ -8,3 +8,8 @@ export type PieceBodyType = {
     weight: number
     caratage: string
 }
+
+export type PieceUpdateBodyType = PieceBodyType & {
+    photoSelected: string,
+    photos: string[]
+}
