@@ -17,6 +17,9 @@ app.use(fileUpload())
 
 app.use(express.json())
 
+app.get('' ,(req, res) => {
+    res.send('Prueba Vercel.')
+}),
 app.use('/api/pieces', pieceRoutes)
 app.use('/api/admin', adminRouter)
 
