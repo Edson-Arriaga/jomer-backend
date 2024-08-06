@@ -13,9 +13,9 @@ dotenv.config()
 connectDB()
 
 const app = express()
-app.use(morgan('dev'))
-
 app.use(cors(corsConfig))
+
+app.use(morgan('dev'))
 app.use(fileUpload())
 
 app.use(express.json())
