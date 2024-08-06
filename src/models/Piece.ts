@@ -17,7 +17,8 @@ const pieceSchema : Schema = new Schema<IPiece>({
         type: String,
         required: true,
         trim: true,
-        unique: true
+        unique: true,
+        lowercase: true
     },
     price: {
         type: Number,

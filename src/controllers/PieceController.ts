@@ -107,7 +107,7 @@ export class PieceController {
 
             const pieceWithTheSameName = await Piece.findOne({name})
 
-            if(pieceWithTheSameName){
+            if(pieceWithTheSameName && piece.name !== name.toLowerCase()){
                 const error = new Error('Ya existe una pieza con ese nombre.')
                 return res.status(400).json({error: error.message})
             }
