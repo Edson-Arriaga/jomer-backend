@@ -7,7 +7,6 @@ import pieceRoutes from './routes/pieceRoutes'
 import adminRouter from './routes/adminRoutes';
 import { corsConfig } from './config/cors'
 import { connectDB } from './config/db';
-import axios from 'axios';
 
 dotenv.config()
 connectDB()
