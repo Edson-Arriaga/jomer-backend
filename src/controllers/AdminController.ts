@@ -10,7 +10,7 @@ export class AdminController {
                 return res.status(400).json({error: error.message})
             }
 
-            const accessToken = jwt.sign({ authenticated: true }, process.env.JWT_KEY, {expiresIn: '3h'})
+            const accessToken = jwt.sign({ authenticated: true }, process.env.JWT_KEY, {expiresIn: '2h'})
             res.send(accessToken)
         } catch (error) {
             return res.status(400).json({error: error.message})

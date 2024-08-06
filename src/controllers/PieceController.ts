@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import sharp from "sharp"
 import { PieceBodyType, PieceUpdateBodyType } from "../types"
 import app from "../config/firebaseConfig";
@@ -87,7 +87,7 @@ export class PieceController {
         try {
             const { pieceId } = req.params
             const piece = await Piece.findById(pieceId)
-
+                
             if(!piece){
                 const error = new Error('Pieza no encontrada')
                 return res.status(404).json({error: error.message})
@@ -104,6 +104,13 @@ export class PieceController {
                 weight, 
                 photoSelected 
             } = req.body
+
+            const pieceWithTheSameName = await Piece.findOne({name})
+
+            if(pieceWithTheSameName){
+                const error = new Error('Ya existe una pieza con ese nombre.')
+                return res.status(400).json({error: error.message})
+            }
 
             if(req.files !== null){
                 const file = req.files['newPhotoFile']
@@ -143,5 +150,27 @@ export class PieceController {
             res.status(500).send(error.message);
         }
     }
+
+    static deletePiece = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
+        try {
+            const { pieceId } = req.params
+            const piece = await Piece.findById(pieceId)
+
+            if(!piece){
+                const error = new Error('Pieza no encontrada')
+                return res.status(404).json({error: error.message})
+            }
+
+            piece.photos.forEach(async photo => {
+                const photoRef = ref(storage, photo);
+                await deleteObject(photoRef)
+            })
+
+            await piece.deleteOne()
+            res.send("Pieza Eliminada Correctamente")
+        } catch (error) {
+            res.status(500).send(error);
+        }
+    }   
 }
 

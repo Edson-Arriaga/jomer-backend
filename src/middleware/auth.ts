@@ -8,8 +8,8 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         return res.status(401).json({error: error.message})
     }
 
-    //Split the string because bearer is this: "Barear <token>"
     const [, token] = bearer.split(' ')
+    
     try {
         const decoded = jwt.verify(token, process.env.JWT_KEY)
         if(typeof decoded === 'object' && !decoded.authenticated){
