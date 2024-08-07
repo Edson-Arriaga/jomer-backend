@@ -5,13 +5,22 @@ export class AdminController {
     static login = async (req: Request, res: Response) => {
         try {
             const { password } = req.body
+            
             if (password !== process.env.AUTH_PASSWORD){
                 const error = new Error('Contraseña incorrecta')
                 return res.status(400).json({error: error.message})
             }
 
-            const accessToken = jwt.sign({ authenticated: true }, process.env.JWT_KEY, {expiresIn: '2h'})
+            const accessToken = jwt.sign({}, process.env.JWT_KEY, {expiresIn: '3h'})
             res.send(accessToken)
+        } catch (error) {
+            return res.status(400).json({error: error.message})
+        }
+    }
+
+    static verifyExpToken = async (req: Request, res: Response) => {
+        try {
+            res.send("Token válido.")
         } catch (error) {
             return res.status(400).json({error: error.message})
         }
