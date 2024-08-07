@@ -1,13 +1,63 @@
 import { Router } from 'express'
 import { PieceController } from '../controllers/PieceController'
 import { authenticateToken } from '../middleware/auth'
+import { body, param } from 'express-validator'
+import { handleInputErrors } from '../middleware/validation'
 
 const router = Router()
 
-router.post('/', authenticateToken, PieceController.addPiece)
+router.post('/', 
+    authenticateToken,
+    body('name').notEmpty().withMessage('The name is required'),
+    body('price')
+        .notEmpty().withMessage('The price is required')
+        .custom(v => v >= 0).withMessage('The price must be greater or equal than 0'),
+    body('category').notEmpty().withMessage('The category is required'),
+    body('weight')
+        .notEmpty().withMessage('The weight is required')
+        .custom(v => v >= 0).withMessage('The weight must be greater or equal than 0'),
+    body('caratage').notEmpty().withMessage('The caratage is required'),
+    body('description').notEmpty().withMessage('The description is required'),
+    body('measure')
+        .notEmpty().withMessage('The measure is required')
+        .custom(v => v >= 0).withMessage('The measure must be greater or equal than 0'),
+    handleInputErrors,
+    PieceController.addPiece
+)
+
 router.get('/', PieceController.getPieces)
-router.get('/:pieceId', PieceController.getPieceById)
-router.put('/:pieceId', authenticateToken ,PieceController.updatePiece)
-router.delete('/:pieceId', authenticateToken ,PieceController.deletePiece)
+
+router.get('/:pieceId',
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    handleInputErrors,
+    PieceController.getPieceById
+)
+
+router.put('/:pieceId', 
+    authenticateToken, 
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    body('name').notEmpty().withMessage('The name is required'),
+    body('price')
+        .notEmpty().withMessage('The price is required')
+        .custom(v => v >= 0).withMessage('The price must be greater or equal than 0'),
+    body('category').notEmpty().withMessage('The category is required'),
+    body('weight')
+        .notEmpty().withMessage('The weight is required')
+        .custom(v => v >= 0).withMessage('The weight must be greater or equal than 0'),
+    body('caratage').notEmpty().withMessage('The caratage is required'),
+    body('description').notEmpty().withMessage('The description is required'),
+    body('measure')
+        .notEmpty().withMessage('The measure is required')
+        .custom(v => v >= 0).withMessage('The measure must be greater or equal than 0'),
+    handleInputErrors,
+    PieceController.updatePiece
+)
+
+router.delete('/:pieceId', 
+    authenticateToken,
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    handleInputErrors,
+    PieceController.deletePiece
+)
 
 export default router

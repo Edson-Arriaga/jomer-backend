@@ -16,7 +16,7 @@ export class PieceController {
                 const error = new Error('Ya existe una pieza con ese nombre.')
                 return res.status(400).json({error: error.message})
             }
-            
+
             const files = req.files['photos[]'];
             const fileArray = Array.isArray(files) ? files : [files];
             
@@ -55,7 +55,7 @@ export class PieceController {
             res.send('Pieza Añadida Correctamente');
             
         } catch (error) {
-            return res.status(500).json({error: error})  
+            return res.status(500).json({error: error.message})  
         }
     }
 
