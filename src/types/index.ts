@@ -1,7 +1,7 @@
 export type PieceBodyType = {
     name: string
     description: string
-    price: number
+    availability: boolean
     category: string
     measure: number
     measure2: number

@@ -14,6 +14,6 @@ export const corsConfig : CorsOptions = {
             callback(new Error('Error de CORS'))
         }
     },
-    methods: 'GET, HEAD, PUT, POST,DELETE',
+    methods: 'GET, HEAD, PUT, POST, DELETE, PATCH',
     credentials: true,
 }

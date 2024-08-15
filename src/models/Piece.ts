@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose"
 
 export interface IPiece extends Document {
     name: string,
-    price: number,
+    availability: boolean,
     category: string,
     weight: number,
     caratage: string,
@@ -20,8 +20,8 @@ const pieceSchema : Schema = new Schema<IPiece>({
         unique: true,
         lowercase: true
     },
-    price: {
-        type: Number,
+    availability: {
+        type: Boolean,
         required: true
     },
     category: {

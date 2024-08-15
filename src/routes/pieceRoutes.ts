@@ -9,9 +9,7 @@ const router = Router()
 router.post('/', 
     authenticateToken,
     body('name').notEmpty().withMessage('The name is required'),
-    body('price')
-        .notEmpty().withMessage('The price is required')
-        .custom(v => v >= 0).withMessage('The price must be greater or equal than 0'),
+    body('availability').notEmpty().withMessage('The avaliability is required'),
     body('category').notEmpty().withMessage('The category is required'),
     body('weight')
         .notEmpty().withMessage('The weight is required')
@@ -37,9 +35,7 @@ router.put('/:pieceId',
     authenticateToken, 
     param('pieceId').isMongoId().withMessage('Invalid ID'),
     body('name').notEmpty().withMessage('The name is required'),
-    body('price')
-        .notEmpty().withMessage('The price is required')
-        .custom(v => v >= 0).withMessage('The price must be greater or equal than 0'),
+    body('availability').notEmpty().withMessage('The avaliability is required'),
     body('category').notEmpty().withMessage('The category is required'),
     body('weight')
         .notEmpty().withMessage('The weight is required')
@@ -58,6 +54,13 @@ router.delete('/:pieceId',
     param('pieceId').isMongoId().withMessage('Invalid ID'),
     handleInputErrors,
     PieceController.deletePiece
+)
+
+router.patch('/:pieceId/change-availability',
+    authenticateToken,
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    handleInputErrors,
+    PieceController.changeAvailability
 )
 
 export default router

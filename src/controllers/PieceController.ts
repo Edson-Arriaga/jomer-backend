@@ -95,7 +95,7 @@ export class PieceController {
 
             const { 
                 name, 
-                price, 
+                availability, 
                 caratage, 
                 category, 
                 description, 
@@ -133,7 +133,7 @@ export class PieceController {
             }
 
             piece.name = name
-            piece.price = price
+            piece.availability = availability
             piece.caratage = caratage
             piece.category = category
             piece.description = description
@@ -172,5 +172,25 @@ export class PieceController {
             res.status(500).send(error);
         }
     }   
+
+    static changeAvailability = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
+        try {
+            const { pieceId } = req.params
+            const piece = await Piece.findById(pieceId)
+
+            if(!piece){
+                const error = new Error('Pieza no encontrada')
+                return res.status(404).json({error: error.message})
+            }
+
+            piece.availability = piece.availability ? false : true
+
+            await piece.save()
+
+            res.send("Disponibilidad Actualizada Correctamente")
+        } catch (error) {
+            res.status(500).send(error);
+        }
+    }  
 }
 
