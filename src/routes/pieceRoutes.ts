@@ -63,4 +63,19 @@ router.patch('/:pieceId/change-availability',
     PieceController.changeAvailability
 )
 
+router.patch('/:pieceId/delete-image',
+    authenticateToken,
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    body('photo').notEmpty().withMessage('The photo is required'),
+    handleInputErrors,
+    PieceController.deleteImage
+)
+
+router.patch('/:pieceId/add-image',
+    authenticateToken,
+    param('pieceId').isMongoId().withMessage('Invalid ID'),
+    handleInputErrors,
+    PieceController.addImage
+)
+
 export default router

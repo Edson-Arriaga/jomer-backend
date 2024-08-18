@@ -10,6 +10,7 @@ export type PieceBodyType = {
 }
 
 export type PieceUpdateBodyType = PieceBodyType & {
-    photoSelected: string,
-   
+    photoSelected: string
 }
+
+export type PhotoBodyType = {photo: string}

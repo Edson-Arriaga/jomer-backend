@@ -1,7 +1,8 @@
 import { Request, Response } from "express"
+import { v4 as uuidv4 } from "uuid"
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import sharp from "sharp"
-import { PieceBodyType, PieceUpdateBodyType } from "../types"
+import { PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
 import app from "../config/firebaseConfig";
 import Piece from "../models/Piece";
 
@@ -192,5 +193,72 @@ export class PieceController {
             res.status(500).send(error);
         }
     }  
+
+    static deleteImage = async (req: Request<{pieceId: string}, {}, PhotoBodyType>, res: Response) => {
+        try {
+            const { pieceId } = req.params
+            const piece = await Piece.findById(pieceId)
+
+            if(!piece){
+                const error = new Error('Pieza no encontrada')
+                return res.status(404).json({error: error.message})
+            }
+            console.log(req.body.photo)
+
+
+            piece.photos = piece.photos.filter(photo => photo !== req.body.photo)
+
+            const photoRef = ref(storage, req.body.photo);
+            await deleteObject(photoRef)
+
+            piece.save()
+            res.send("Imagen eliminada correctamente")
+        } catch (error) {
+            res.status(500).send(error)
+        }
+    }
+
+    static addImage = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
+        try {
+            const { pieceId } = req.params
+            const piece = await Piece.findById(pieceId)
+                
+            if(!piece){
+                const error = new Error('Pieza no encontrada')
+                return res.status(404).json({error: error.message})
+            }
+
+            const files = req.files.photo
+            const filesArray = Array.isArray(files) ? files : [files]
+            const file = filesArray[0]
+            
+            const {width, height } = await sharp(file.data).metadata();
+            if(width !== height){
+                const error = new Error('La imagen deden ser cuadrada.')
+                return res.status(400).json({error: error.message})
+            }
+
+            const imageWebp = await sharp(file.data)
+                    .toFormat("webp", {quality: 80})
+                    .toBuffer()
+        
+            const uniqueId = uuidv4()
+            const webpFileName = `${piece.name}_${uniqueId}.webp`
+
+            const storageRef = ref(storage, `${piece.name}/${webpFileName}`);
+
+            await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
+
+            const downloadURL = await getDownloadURL(storageRef);
+                
+            piece.photos.push(downloadURL)
+            piece.save()
+
+            res.send("Imagen Agregada Correctamente")
+    
+        } catch (error) {
+            res.status(500).send(error)
+        }
+    }
 }
 
