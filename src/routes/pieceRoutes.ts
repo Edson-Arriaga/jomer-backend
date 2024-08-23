@@ -3,6 +3,7 @@ import { PieceController } from '../controllers/PieceController'
 import { authenticateToken } from '../middleware/auth'
 import { body, param } from 'express-validator'
 import { handleInputErrors } from '../middleware/validation'
+import { pieceExist } from '../middleware/piece'
 
 const router = Router()
 
@@ -24,6 +25,10 @@ router.post('/',
 )
 
 router.get('/', PieceController.getPieces)
+
+
+
+router.param('pieceId', pieceExist)
 
 router.get('/:pieceId',
     param('pieceId').isMongoId().withMessage('Invalid ID'),

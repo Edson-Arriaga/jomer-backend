@@ -6,16 +6,16 @@ import { PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
 import app from "../config/firebaseConfig";
 import Piece from "../models/Piece";
 
-const storage = getStorage(app, "gs://jomer-ba42e.appspot.com");
+const storage = getStorage(app, process.env.FIREBASE_STORAGE);
 
 export class PieceController {
     static addPiece = async (req: Request<{}, {}, PieceBodyType>, res: Response) => {
         try {
-            const piece = await Piece.findOne({name: req.body.name})
+            const matchedPiece = await Piece.findOne({name: req.body.name.toLocaleLowerCase()})
 
-            if(piece){
+            if(matchedPiece){
                 const error = new Error('Ya existe una pieza con ese nombre.')
-                return res.status(400).json({error: error.message})
+                return res.status(409).json({error: error.message})
             }
 
             const files = req.files['photos[]'];
@@ -30,31 +30,34 @@ export class PieceController {
                 const {width, height} = await sharp(file.data).metadata();
                 if(width !== height){
                     const error = new Error('Las imagenes deden ser cuadradas.')
-                    return res.status(400).json({error: error.message})
+                    return res.status(422).json({error: error.message})
                 }
             }
 
+            const piece = new Piece({
+                ...req.body,
+                photos: []
+            });
+            
             let photos : string[] = []
 
-            await Promise.all(fileArray.map(async(file, i) => {
+            await Promise.all(fileArray.map( async (file, i) => {
                 const imageWebp = await sharp(file.data)
                 .toFormat("webp", {quality: 80})
                 .toBuffer()
                 
-                const webpFileName = `${req.body.name}_${i}.webp`
-                const storageRef = ref(storage, `${req.body.name}/${webpFileName}`);
-                
+                const webpFileName = `${piece._id}_${i}.webp`
+
+                const storageRef = ref(storage, `${piece._id}/${webpFileName}`);
                 await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
-                
                 const downloadURL = await getDownloadURL(storageRef);
                 
                 photos.push(downloadURL)
             }))
             
-            Piece.create({...req.body, photos})    
-
+            piece.photos = photos
+            piece.save()
             res.send('Pieza Añadida Correctamente');
-            
         } catch (error) {
             return res.status(500).json({error: error.message})  
         }
@@ -65,35 +68,20 @@ export class PieceController {
             const pieces = await Piece.find({})
             res.send(pieces)
         } catch (error) {
-            res.send(error);   
+            return res.status(500).json({error: error.message})  
         }
     }
 
     static getPieceById = async (req: Request, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-            res.send(piece)
-
+            res.send(req.piece)
         } catch (error) {
-            res.send(error.message)
+            return res.status(500).json({error: error.message})  
         }
     }
 
     static updatePiece = async (req: Request<{pieceId: string}, {}, PieceUpdateBodyType>, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-                
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-
             const { 
                 name, 
                 availability, 
@@ -108,9 +96,9 @@ export class PieceController {
 
             const pieceWithTheSameName = await Piece.findOne({name})
 
-            if(pieceWithTheSameName && piece.name !== name.toLowerCase()){
+            if(pieceWithTheSameName && req.piece.name !== name.toLowerCase()){
                 const error = new Error('Ya existe una pieza con ese nombre.')
-                return res.status(400).json({error: error.message})
+                return res.status(409).json({error: error.message})
             }
 
             if(req.files !== null){
@@ -121,7 +109,7 @@ export class PieceController {
                 const { width, height } = await sharp(newPhoto.data).metadata()
                 if(width !== height){
                     const error = new Error('La imagen dede ser cuadrada.')
-                    return res.status(400).json({error: error.message})
+                    return res.status(422).json({error: error.message})
                 }
 
                 const imageWebp = await sharp(newPhoto.data)
@@ -133,109 +121,74 @@ export class PieceController {
                 await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
             }
 
-            piece.name = name
-            piece.availability = availability
-            piece.caratage = caratage
-            piece.category = category
-            piece.description = description
-            piece.measure = measure
+            req.piece.name = name
+            req.piece.availability = availability
+            req.piece.caratage = caratage
+            req.piece.category = category
+            req.piece.description = description
+            req.piece.measure = measure
             if(measure2){
-                piece.measure2 = measure2
+                req.piece.measure2 = measure2
             }
-            piece.weight = weight
+            req.piece.weight = weight
             
-            await piece.save()
+            await req.piece.save()
 
             res.send("Pieza Actuazliada Correctamente")          
         } catch (error) {
-            res.status(500).send(error.message);
+            return res.status(500).json({error: error.message})  
         }
     }
 
     static deletePiece = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-
-            piece.photos.forEach(async photo => {
+                req.piece.photos.forEach(async photo => {
                 const photoRef = ref(storage, photo);
                 await deleteObject(photoRef)
             })
 
-            await piece.deleteOne()
+            await req.piece.deleteOne()
             res.send("Pieza Eliminada Correctamente")
         } catch (error) {
-            res.status(500).send(error);
+            return res.status(500).json({error: error.message})  
         }
     }   
 
     static changeAvailability = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-
-            piece.availability = piece.availability ? false : true
-
-            await piece.save()
-
+            req.piece.availability = req.piece.availability ? false : true
+            await req.piece.save()
             res.send("Disponibilidad Actualizada Correctamente")
+    
         } catch (error) {
-            res.status(500).send(error);
+            return res.status(500).json({error: error.message})  
         }
     }  
 
     static deleteImage = async (req: Request<{pieceId: string}, {}, PhotoBodyType>, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-            console.log(req.body.photo)
-
-
-            piece.photos = piece.photos.filter(photo => photo !== req.body.photo)
-
+            req.piece.photos = req.piece.photos.filter(photo => photo !== req.body.photo)
             const photoRef = ref(storage, req.body.photo);
             await deleteObject(photoRef)
 
-            piece.save()
+            req.piece.save()
             res.send("Imagen eliminada correctamente")
+
         } catch (error) {
-            res.status(500).send(error)
+            return res.status(500).json({error: error.message})  
         }
     }
 
     static addImage = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
         try {
-            const { pieceId } = req.params
-            const piece = await Piece.findById(pieceId)
-                
-            if(!piece){
-                const error = new Error('Pieza no encontrada')
-                return res.status(404).json({error: error.message})
-            }
-
             const files = req.files.photo
             const filesArray = Array.isArray(files) ? files : [files]
             const file = filesArray[0]
             
-            const {width, height } = await sharp(file.data).metadata();
+            const { width, height } = await sharp(file.data).metadata();
             if(width !== height){
                 const error = new Error('La imagen deden ser cuadrada.')
-                return res.status(400).json({error: error.message})
+                return res.status(422).json({error: error.message})
             }
 
             const imageWebp = await sharp(file.data)
@@ -243,21 +196,19 @@ export class PieceController {
                     .toBuffer()
         
             const uniqueId = uuidv4()
-            const webpFileName = `${piece.name}_${uniqueId}.webp`
+            const webpFileName = `${req.piece._id}_${uniqueId}.webp`
 
-            const storageRef = ref(storage, `${piece.name}/${webpFileName}`);
-
+            const storageRef = ref(storage, `${req.piece._id}/${webpFileName}`);
             await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
-
             const downloadURL = await getDownloadURL(storageRef);
                 
-            piece.photos.push(downloadURL)
-            piece.save()
+            req.piece.photos.push(downloadURL)
+            req.piece.save()
 
             res.send("Imagen Agregada Correctamente")
     
         } catch (error) {
-            res.status(500).send(error)
+            return res.status(500).json({error: error.message})
         }
     }
 }
