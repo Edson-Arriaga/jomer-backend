@@ -6,7 +6,7 @@ import { PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
 import app from "../config/firebaseConfig";
 import Piece from "../models/Piece";
 
-const storage = getStorage(app, process.env.FIREBASE_STORAGE);
+const storage = getStorage(app, 'gs://jomer-ba42e.appspot.com');
 
 export class PieceController {
     static addPiece = async (req: Request<{}, {}, PieceBodyType>, res: Response) => {
