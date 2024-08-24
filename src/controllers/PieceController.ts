@@ -73,7 +73,6 @@ export class PieceController {
             const totalPieces = await Piece.countDocuments();
             const hasMore = skip + limit < totalPieces;
             const nextPage = hasMore ? page + 1 : null;
-            console.log("TOdo bien: " + nextPage)
             res.send({ pieces, nextPage });
         } catch (error) {
             return res.status(500).json({ error: error.message });
