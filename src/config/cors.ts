@@ -1,6 +1,6 @@
 import { CorsOptions } from 'cors'
 
-const whiteList = [process.env.FRONTEND_URL]
+const whiteList = [process.env.FRONTEND_URL, 'http://localhost:5173']
 
 export const corsConfig : CorsOptions = {
     origin: function(origin, callback){
@@ -14,6 +14,5 @@ export const corsConfig : CorsOptions = {
             callback(new Error('Error de CORS'))
         }
     },
-    methods: 'GET, HEAD, PUT, POST, DELETE, PATCH',
-    credentials: true,
+    methods: 'GET, HEAD, PUT, POST, DELETE, PATCH'
 }
