@@ -26,8 +26,6 @@ router.post('/',
 
 router.get('/', PieceController.getPieces)
 
-
-
 router.param('pieceId', pieceExist)
 
 router.get('/:pieceId',

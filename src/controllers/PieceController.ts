@@ -64,13 +64,21 @@ export class PieceController {
     }
 
     static getPieces = async (req: Request, res: Response) => {
+        const limit = 8;
+        const page = parseInt(req.query.page as string) || 1; 
+        const skip = (page - 1) * limit; 
+    
         try {
-            const pieces = await Piece.find({})
-            res.send(pieces)
+            const pieces = await Piece.find().skip(skip).limit(limit);
+            const totalPieces = await Piece.countDocuments();
+            const hasMore = skip + limit < totalPieces;
+            const nextPage = hasMore ? page + 1 : null;
+    
+            res.send({ pieces, nextPage });
         } catch (error) {
-            return res.status(500).json({error: error.message})  
+            return res.status(500).json({ error: error.message });
         }
-    }
+    };
 
     static getPieceById = async (req: Request, res: Response) => {
         try {
