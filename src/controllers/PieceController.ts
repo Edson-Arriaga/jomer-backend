@@ -66,7 +66,6 @@ export class PieceController {
     static getPieces = async (req: Request, res: Response) => {
         const limit = 8;
         const page = parseInt(req.query.page as string) || 1; 
-        console.log(req.query.page)
         const skip = (page - 1) * limit; 
         
         try {
@@ -74,7 +73,7 @@ export class PieceController {
             const totalPieces = await Piece.countDocuments();
             const hasMore = skip + limit < totalPieces;
             const nextPage = hasMore ? page + 1 : null;
-            console.log(nextPage)
+            console.log("TOdo bien: " + nextPage)
             res.send({ pieces, nextPage });
         } catch (error) {
             return res.status(500).json({ error: error.message });
