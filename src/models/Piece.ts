@@ -55,7 +55,7 @@ const pieceSchema : Schema = new Schema<IPiece>({
         required: true,
         validate: [arrayLimit]
     }
-})
+}, {timestamps: true})
 
 function arrayLimit(val : string[]) {
     return val.length >= 1 && val.length <= 5

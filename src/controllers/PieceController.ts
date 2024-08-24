@@ -69,7 +69,7 @@ export class PieceController {
         const skip = (page - 1) * limit; 
         
         try {
-            const pieces = await Piece.find().skip(skip).limit(limit);
+            const pieces = await Piece.find().skip(skip).limit(limit).sort({createdAt: -1});
             const totalPieces = await Piece.countDocuments();
             const hasMore = skip + limit < totalPieces;
             const nextPage = hasMore ? page + 1 : null;
@@ -140,7 +140,7 @@ export class PieceController {
             req.piece.weight = weight
             
             await req.piece.save()
-
+            
             res.send("Pieza Actuazliada Correctamente")          
         } catch (error) {
             return res.status(500).json({error: error.message})  
