@@ -1,12 +1,10 @@
 import { Request, Response } from "express"
 import { v4 as uuidv4 } from "uuid"
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import sharp from "sharp"
 import { PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
-import app from "../config/firebaseConfig";
+import {storage} from "../config/firebaseConfig";
 import Piece from "../models/Piece";
-
-const storage = getStorage(app, 'gs://jomer-ba42e.appspot.com');
 
 export class PieceController {
     static addPiece = async (req: Request<{}, {}, PieceBodyType>, res: Response) => {
@@ -49,7 +47,9 @@ export class PieceController {
                 const webpFileName = `${piece._id}_${i}.webp`
 
                 const storageRef = ref(storage, `${piece._id}/${webpFileName}`);
-                await uploadBytes(storageRef, imageWebp, { contentType: "image/webp" });
+                await uploadBytes(storageRef, imageWebp, { 
+                    contentType: "image/webp"   
+                });
                 const downloadURL = await getDownloadURL(storageRef);
                 
                 photos.push(downloadURL)
