@@ -2,7 +2,7 @@ import { Request, Response } from "express"
 import { v4 as uuidv4 } from "uuid"
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import sharp from "sharp"
-import { PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
+import { FilterBodyType, FilterObjectType, PhotoBodyType, PieceBodyType, PieceUpdateBodyType } from "../types"
 import {storage} from "../config/firebaseConfig";
 import Piece from "../models/Piece";
 
@@ -63,16 +63,36 @@ export class PieceController {
         }
     }
 
-    static getPieces = async (req: Request, res: Response) => {
-        const limit = 8;
-        const page = parseInt(req.query.page as string) || 1; 
+    static getPieces = async (req: Request<{}, {}, {}, FilterBodyType>, res: Response) => {
+        const limit = 16;
+        const page = parseInt(req.query.page) || 1; 
         const skip = (page - 1) * limit; 
+
+
+        const filter = {} as FilterObjectType
+
+        if(req.query.category){
+            if(req.query.category === 'marriage'){
+                filter.category = { $in: ['engagementRing', 'weddingRing']}
+            }else {
+                filter.category = req.query.category
+            }
+        }
+
+        if(req.query.caratage){
+            filter.caratage = req.query.caratage
+        }
+
+        if(req.query.availability){
+            filter.availability = req.query.availability
+        }
         
         try {
-            const pieces = await Piece.find().skip(skip).limit(limit).sort({createdAt: -1});
+            const pieces = await Piece.find(filter).skip(skip).limit(limit).sort({createdAt: -1});
             const totalPieces = await Piece.countDocuments();
             const hasMore = skip + limit < totalPieces;
             const nextPage = hasMore ? page + 1 : null;
+
             res.send({ pieces, nextPage });
         } catch (error) {
             return res.status(500).json({ error: error.message });
@@ -163,7 +183,7 @@ export class PieceController {
 
     static changeAvailability = async (req: Request<{pieceId: string}, {}, {}>, res: Response) => {
         try {
-            req.piece.availability = req.piece.availability ? false : true
+            req.piece.availability = !req.piece.availability
             await req.piece.save()
             res.send("Disponibilidad Actualizada Correctamente")
     

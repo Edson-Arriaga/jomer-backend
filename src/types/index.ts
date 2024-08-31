@@ -14,3 +14,13 @@ export type PieceUpdateBodyType = PieceBodyType & {
 }
 
 export type PhotoBodyType = {photo: string}
+
+export type FilterBodyType = {
+    page: string,
+    category?: string | { $in: string[] },
+    caratage?: string,
+    availability?: string
+}
+
+export type FilterObjectType = Omit<FilterBodyType, 'page'>
+
