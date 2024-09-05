@@ -41,7 +41,8 @@ export class PieceController {
 
             await Promise.all(fileArray.map( async (file, i) => {
                 const imageWebp = await sharp(file.data)
-                .toFormat("webp", {quality: 80})
+                .resize(850, 850)
+                .toFormat("webp", {quality: 85})
                 .toBuffer()
                 
                 const webpFileName = `${piece._id}_${i}.webp`
@@ -50,6 +51,7 @@ export class PieceController {
                 await uploadBytes(storageRef, imageWebp, { 
                     contentType: "image/webp"   
                 });
+
                 const downloadURL = await getDownloadURL(storageRef);
                 
                 photos.push(downloadURL)
@@ -64,7 +66,7 @@ export class PieceController {
     }
 
     static getPieces = async (req: Request<{}, {}, {}, FilterBodyType>, res: Response) => {
-        const limit = 16;
+        const limit = 12;
         const page = parseInt(req.query.page) || 1; 
         const skip = (page - 1) * limit; 
 
@@ -140,7 +142,8 @@ export class PieceController {
                 }
 
                 const imageWebp = await sharp(newPhoto.data)
-                    .toFormat("webp", {quality: 80})
+                    .resize(850, 850)
+                    .toFormat("webp", {quality: 85})
                     .toBuffer()
 
                 const storageRef = ref(storage, photoSelected);
@@ -219,8 +222,9 @@ export class PieceController {
             }
 
             const imageWebp = await sharp(file.data)
-                    .toFormat("webp", {quality: 80})
-                    .toBuffer()
+                .resize(850, 850)
+                .toFormat("webp", {quality: 85})
+                .toBuffer()
         
             const uniqueId = uuidv4()
             const webpFileName = `${req.piece._id}_${uniqueId}.webp`
